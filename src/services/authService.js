@@ -176,4 +176,56 @@ export class AuthService {
     const user = USERS_STORE.find((u) => u.id === session.userId);
     return sanitizeUser(user);
   }
+
+  /**
+   * Met à jour le profil d'un passager.
+   * @param {string} userId - Identifiant utilisateur.
+   * @param {Object} updates - Données à modifier.
+   * @returns {Object} Profil mis à jour.
+   */
+  static updateUserProfile(userId, updates) {
+    const userIndex = USERS_STORE.findIndex((u) => u.id === userId);
+    if (userIndex === -1) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    const current = USERS_STORE[userIndex];
+    if (updates.fullName) current.fullName = updates.fullName.trim();
+    if (updates.username) current.username = updates.username.trim();
+    if (updates.phone) current.phone = updates.phone.trim();
+    if (updates.email !== undefined) current.email = updates.email ? updates.email.trim().toLowerCase() : null;
+    if (updates.city) current.city = updates.city;
+    if (updates.emergencyContactName !== undefined) current.emergencyContactName = updates.emergencyContactName;
+    if (updates.emergencyContactPhone !== undefined) current.emergencyContactPhone = updates.emergencyContactPhone;
+    if (updates.preferredPayment) current.preferredPayment = updates.preferredPayment;
+    if (updates.preferredCompany) current.preferredCompany = updates.preferredCompany;
+    if (updates.seatPreference) current.seatPreference = updates.seatPreference;
+    if (updates.smsAlerts !== undefined) current.smsAlerts = updates.smsAlerts;
+
+    return sanitizeUser(current);
+  }
+
+  /**
+   * Modifie le mot de passe d'un utilisateur.
+   * @param {string} userId - Identifiant utilisateur.
+   * @param {string} oldPassword - Ancien mot de passe.
+   * @param {string} newPassword - Nouveau mot de passe.
+   * @returns {boolean} Succès de l'opération.
+   */
+  static changePassword(userId, oldPassword, newPassword) {
+    const user = USERS_STORE.find((u) => u.id === userId);
+    if (!user) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    const oldHash = hashWithSalt(oldPassword, user.salt);
+    if (oldHash !== user.passwordHash) {
+      throw new Error('INVALID_OLD_PASSWORD');
+    }
+
+    const newSalt = crypto.randomBytes(16).toString('hex');
+    user.salt = newSalt;
+    user.passwordHash = hashWithSalt(newPassword, newSalt);
+    return true;
+  }
 }

@@ -29,4 +29,18 @@ router.post('/login', AuthController.login);
  */
 router.get('/me', AuthController.getMe);
 
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Mise à jour des informations de profil du voyageur
+ * @access  Privé
+ */
+router.put('/profile', AuthController.updateProfile);
+
+/**
+ * @route   PUT /api/auth/password
+ * @desc    Changement du mot de passe
+ * @access  Privé
+ */
+router.put('/password', AuthController.updatePassword);
+
 export default router;

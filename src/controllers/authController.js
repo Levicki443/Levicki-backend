@@ -159,4 +159,85 @@ export class AuthController {
       data: user
     });
   }
+
+  /**
+   * Met à jour le profil de l'utilisateur.
+   */
+  static updateProfile(req, res) {
+    const authHeader = req.headers[AUTH_CONFIG.TOKEN_HEADER] || req.headers.authorization;
+    let userId = 'usr-pass-01'; // ID par défaut en mode local/démonstration
+
+    if (authHeader && authHeader.startsWith(AUTH_CONFIG.TOKEN_PREFIX)) {
+      const token = authHeader.substring(AUTH_CONFIG.TOKEN_PREFIX.length).trim();
+      const user = AuthService.verifyTokenAndGetUser(token);
+      if (user) userId = user.id;
+    }
+
+    try {
+      const updatedUser = AuthService.updateUserProfile(userId, req.body || {});
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'Profil passager mis à jour avec succès.',
+        data: updatedUser
+      });
+    } catch (err) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: {
+          code: 'PROFILE_UPDATE_FAILED',
+          message: 'Échec de la mise à jour des informations de profil.'
+        }
+      });
+    }
+  }
+
+  /**
+   * Met à jour le mot de passe utilisateur.
+   */
+  static updatePassword(req, res) {
+    const { oldPassword, newPassword } = req.body || {};
+    const authHeader = req.headers[AUTH_CONFIG.TOKEN_HEADER] || req.headers.authorization;
+    let userId = 'usr-pass-01';
+
+    if (authHeader && authHeader.startsWith(AUTH_CONFIG.TOKEN_PREFIX)) {
+      const token = authHeader.substring(AUTH_CONFIG.TOKEN_PREFIX.length).trim();
+      const user = AuthService.verifyTokenAndGetUser(token);
+      if (user) userId = user.id;
+    }
+
+    if (!newPassword || newPassword.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: {
+          code: 'INVALID_PASSWORD',
+          message: `Le nouveau mot de passe doit contenir au moins ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} caractères.`
+        }
+      });
+    }
+
+    try {
+      AuthService.changePassword(userId, oldPassword, newPassword);
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'Mot de passe modifié avec succès.'
+      });
+    } catch (err) {
+      if (err.message === 'INVALID_OLD_PASSWORD') {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          success: false,
+          error: {
+            code: 'INVALID_OLD_PASSWORD',
+            message: 'L\'ancien mot de passe fourni est incorrect.'
+          }
+        });
+      }
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: {
+          code: 'PASSWORD_CHANGE_FAILED',
+          message: 'Impossible de modifier le mot de passe.'
+        }
+      });
+    }
+  }
 }
