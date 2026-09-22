@@ -23,23 +23,46 @@ export function secureHeadersMiddleware(req, res, next) {
 }
 
 /**
- * Middleware de configuration CORS avec validation stricte de l'origine.
+ * Récupère la liste des origines autorisées (variables d'environnement + valeurs par défaut locales).
+ * @returns {string[]}
+ */
+export function getAllowedOrigins() {
+  const envOrigins = (process.env.ALLOW_ORIGINS || process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([...SECURITY_CONFIG.DEFAULT_CORS_ORIGINS, ...envOrigins]));
+}
+
+/**
+ * Middleware de configuration CORS avec validation stricte de l'origine et support ALLOW_ORIGINS.
  * @param {import('express').Request} req - Requête entrante.
  * @param {import('express').Response} res - Réponse HTTP.
  * @param {import('express').NextFunction} next - Poursuite.
  */
 export function corsMiddleware(req, res, next) {
   const origin = req.headers.origin;
+  const allowedOrigins = getAllowedOrigins();
+  const allowAll = process.env.ALLOW_ORIGINS === '*' || process.env.ALLOWED_ORIGINS === '*';
 
-  if (origin && SECURITY_CONFIG.CORS_ALLOWED_ORIGINS.includes(origin)) {
+  if (allowAll) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
-    // Requêtes de même origine ou directes (Postman/cURL de test)
+    // Requêtes de même origine, serveur à serveur ou outils de test (Postman / cURL)
     res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (origin) {
+    // Si l'origine n'est pas explicitement listée mais en développement, l'accepter avec log
+    if (process.env.NODE_ENV !== 'production') {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 
   if (req.method === 'OPTIONS') {

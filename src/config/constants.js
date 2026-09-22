@@ -28,13 +28,17 @@ export const HTTP_STATUS = Object.freeze({
 export const SECURITY_CONFIG = Object.freeze({
   MAX_BODY_SIZE: '50kb',
   DEFAULT_PORT: 5000,
-  CORS_ALLOWED_ORIGINS: [
+  DEFAULT_CORS_ORIGINS: [
     'http://localhost:3000',
     'http://localhost:5000',
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
     'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5500'
   ]
 });
 

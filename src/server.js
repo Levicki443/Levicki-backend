@@ -3,6 +3,9 @@
  * @description Point d'entrée d'exécution du serveur HTTP Node.js.
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import app from './app.js';
 import { SECURITY_CONFIG } from './config/constants.js';
 

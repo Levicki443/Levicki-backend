@@ -3,6 +3,9 @@
  * @description Configuration de l'application Express, intégration des middlewares et montage des routes REST.
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { HTTP_STATUS, SECURITY_CONFIG, ERROR_MESSAGES } from './config/constants.js';
 import { 
